@@ -4,7 +4,6 @@ import requests
 
 from PyQt6 import QtCore
 
-
 logger = logging.getLogger("gotify-tray")
 
 
@@ -30,6 +29,11 @@ class GotifyPagingModel(AttributeDict):
     size: int
 
 
+class GotifyCommonExtras:
+    markdown: bool = False
+    url: str | None = None
+
+
 class GotifyMessageModel(AttributeDict):
     appid: int
     date: QtCore.QDateTime
@@ -38,12 +42,17 @@ class GotifyMessageModel(AttributeDict):
     message: str
     priority: int | None = None
     title: str | None = None
+    common_extras: GotifyCommonExtras
 
     def __init__(self, d: dict, *args, **kwargs):
         d.update(
             {"date": QtCore.QDateTime.fromString(d["date"], format=QtCore.Qt.DateFormat.ISODate).toLocalTime()}
         )
         super(GotifyMessageModel, self).__init__(d, *args, **kwargs)
+        self.common_extras = GotifyCommonExtras()
+        if self.extras:
+            self.common_extras.markdown = self.extras.get("client::display", {}).get("contentType") == "text/markdown"
+            self.common_extras.url = self.extras.get("client::notification", {}).get("click", {}).get("url")
 
 
 class GotifyPagedMessagesModel(AttributeDict):

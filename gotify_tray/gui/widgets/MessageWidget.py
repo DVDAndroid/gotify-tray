@@ -37,7 +37,14 @@ class MessageWidget(QtWidgets.QWidget, Ui_Form):
         self.set_priority_color(message.priority)
 
         # Display message contents
-        self.label_title.setText(message.title)
+        if message.common_extras.url:
+            self.label_title.setText(f'<a href="{message.common_extras.url}">{message.title}</a>')
+            self.label_title.setTextFormat(QtCore.Qt.TextFormat.RichText)
+            self.label_title.setTextInteractionFlags(QtCore.Qt.TextInteractionFlag.TextBrowserInteraction)
+            self.label_title.setOpenExternalLinks(True)
+            self.label_title.setToolTip(f"Open {message.common_extras.url} in your browser")
+        else:
+            self.label_title.setText(message.title)
 
         if settings.value("locale", type=bool):
             date_str = QtCore.QLocale.system().toString(message.date, QtCore.QLocale.FormatType.ShortFormat)
@@ -45,7 +52,7 @@ class MessageWidget(QtWidgets.QWidget, Ui_Form):
             date_str = message.date.toString("yyyy-MM-dd, hh:mm")
         self.label_date.setText(date_str)
 
-        if message.get("extras", {}).get("client::display", {}).get("contentType") == "text/markdown":
+        if message.common_extras.markdown:
             self.label_message.setTextFormat(QtCore.Qt.TextFormat.MarkdownText)
 
         # If the message is only an image URL, then instead of showing the message,
